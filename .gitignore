@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Data files (don't commit large files)
+data/faces/
+data/encodings/
+data/*.zip
+data/*.pkl
+data/*.h5
+data/*.yml
+data/attendance_logs/
+temp/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+
+# Model files (too large for Git)
+models/pretrained/
+models/custom/*.h5
+models/custom/*.pkl
+
+# Temp files
+*.tmp
+*.bak
+
+# MediaPipe models (downloaded at runtime)
+*.tflite
+*.task
+
+# User profile folder
+%USERPROFILE%/
