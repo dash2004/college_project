@@ -24,9 +24,10 @@ class Settings(BaseSettings):
 
     # Attendance thresholds
     ATTENDANCE_MIN_PERCENTAGE: float = 80.0  # Minimum required attendance %
-    BEFORE_CLASS_REMINDER_MINUTES: int = 15  # Send reminder N minutes before class
+    BEFORE_CLASS_REMINDER_MINUTES: int = 10  # Send reminder N minutes before class
 
     class Config:
         case_sensitive = True
+        env_file = ".env"
 
 settings = Settings()

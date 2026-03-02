@@ -8,12 +8,14 @@ const CLASSES = ['A', 'B', 'C'];
 const Attendance = () => {
     const [logs, setLogs] = useState([]);
     const [percentageData, setPercentageData] = useState([]);
+    const [periodLabel, setPeriodLabel] = useState('semester');
     const [loading, setLoading] = useState(true);
     const [filterDate, setFilterDate] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState('logs'); // 'logs' or 'percentage'
     const [filterBranch, setFilterBranch] = useState('');
     const [filterClass, setFilterClass] = useState('');
+    const [filterMonth, setFilterMonth] = useState(''); // '' = semester, '1'-'12' = month
 
     useEffect(() => {
         fetchLogs();
@@ -23,7 +25,7 @@ const Attendance = () => {
         if (viewMode === 'percentage') {
             fetchPercentage();
         }
-    }, [viewMode, filterBranch, filterClass]);
+    }, [viewMode, filterBranch, filterClass, filterMonth]);
 
     const fetchLogs = async () => {
         setLoading(true);
@@ -43,14 +45,35 @@ const Attendance = () => {
             const params = {};
             if (filterBranch) params.branch = filterBranch;
             if (filterClass) params.student_class = filterClass;
+            if (filterMonth) {
+                params.month = parseInt(filterMonth);
+                params.year = new Date().getFullYear();
+            }
             const response = await api.get('/attendance/percentage', { params });
-            setPercentageData(response.data);
+            setPercentageData(response.data.students || []);
+            setPeriodLabel(response.data.period || 'semester');
         } catch (error) {
             console.error("Error fetching percentage:", error);
         } finally {
             setLoading(false);
         }
     };
+
+    const MONTHS = [
+        { value: '', label: 'Full Semester' },
+        { value: '1', label: 'January' },
+        { value: '2', label: 'February' },
+        { value: '3', label: 'March' },
+        { value: '4', label: 'April' },
+        { value: '5', label: 'May' },
+        { value: '6', label: 'June' },
+        { value: '7', label: 'July' },
+        { value: '8', label: 'August' },
+        { value: '9', label: 'September' },
+        { value: '10', label: 'October' },
+        { value: '11', label: 'November' },
+        { value: '12', label: 'December' },
+    ];
 
     const formatDate = (isoString) => {
         const date = new Date(isoString + "Z");
@@ -95,8 +118,8 @@ const Attendance = () => {
                         <button
                             onClick={() => setViewMode('logs')}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'logs'
-                                    ? 'bg-white text-slate-800 shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700'
+                                ? 'bg-white text-slate-800 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700'
                                 }`}
                         >
                             <List size={14} /> Logs
@@ -104,8 +127,8 @@ const Attendance = () => {
                         <button
                             onClick={() => setViewMode('percentage')}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'percentage'
-                                    ? 'bg-white text-slate-800 shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700'
+                                ? 'bg-white text-slate-800 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700'
                                 }`}
                         >
                             <BarChart3 size={14} /> Percentage
@@ -132,6 +155,13 @@ const Attendance = () => {
 
                 {viewMode === 'percentage' ? (
                     <>
+                        <select
+                            value={filterMonth}
+                            onChange={(e) => setFilterMonth(e.target.value)}
+                            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                        >
+                            {MONTHS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                        </select>
                         <select
                             value={filterBranch}
                             onChange={(e) => setFilterBranch(e.target.value)}
@@ -304,8 +334,8 @@ const Attendance = () => {
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-3">
                                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs ${s.status === 'shortage'
-                                                                ? 'bg-red-100 text-red-600'
-                                                                : 'bg-blue-100 text-blue-600'
+                                                            ? 'bg-red-100 text-red-600'
+                                                            : 'bg-blue-100 text-blue-600'
                                                             }`}>
                                                             {s.name.slice(0, 2).toUpperCase()}
                                                         </div>
@@ -375,6 +405,7 @@ const Attendance = () => {
                     </div>
                     <div className="p-4 border-t border-slate-100 flex justify-between items-center text-xs text-slate-400">
                         <span>Showing {filteredPercentage.length} students</span>
+                        <span className="font-medium text-slate-500">Period: {periodLabel}</span>
                     </div>
                 </div>
             )}

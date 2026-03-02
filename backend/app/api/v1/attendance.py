@@ -74,15 +74,37 @@ def get_student_attendance(
 def get_attendance_percentage(
     branch: Optional[str] = Query(None),
     student_class: Optional[str] = Query(None),
+    month: Optional[int] = Query(None, ge=1, le=12, description="Filter by month (1-12)"),
+    year: Optional[int] = Query(None, ge=2020, description="Filter by year (e.g. 2026)"),
     db: Session = Depends(get_db),
 ):
     """
-    Get attendance percentage for all students (or filtered by branch/class).
-    Calculates from the timetable's start_date to today.
-    Includes shortage info: how many classes needed to reach 80%.
+    Get attendance percentage for students.
+    - Default: full semester (start_date → today)
+    - With month & year: only that month (e.g. month=2&year=2026 → Feb 2026)
     """
     from app.utils.timetable_parser import count_total_classes
     from app.utils.sms_service import calculate_shortage
+    import calendar
+
+    # Determine date range if month filter is provided
+    month_start = None
+    month_end = None
+    if month and year:
+        month_start = date(year, month, 1)
+        last_day = calendar.monthrange(year, month)[1]
+        month_end = date(year, month, last_day)
+        # Don't go past today
+        if month_end > date.today():
+            month_end = date.today()
+    elif month and not year:
+        # Default to current year
+        current_year = date.today().year
+        month_start = date(current_year, month, 1)
+        last_day = calendar.monthrange(current_year, month)[1]
+        month_end = date(current_year, month, last_day)
+        if month_end > date.today():
+            month_end = date.today()
 
     # Get students
     query = db.query(Student)
@@ -116,13 +138,23 @@ def get_attendance_percentage(
         attended_classes = 0
         
         if tt and tt.schedule_data and tt.start_date:
-            total_classes = count_total_classes(tt.schedule_data, tt.start_date, today)
+            # Use month range if provided, else full semester
+            calc_start = month_start if month_start else tt.start_date
+            calc_end = month_end if month_end else today
             
-            # Count attendance records with time_slot since start_date
-            sd = datetime.combine(tt.start_date, datetime.min.time())
+            # Clamp start to not be before semester start
+            if calc_start < tt.start_date:
+                calc_start = tt.start_date
+            
+            total_classes = count_total_classes(tt.schedule_data, calc_start, calc_end)
+            
+            # Count attendance records within the date range
+            sd = datetime.combine(calc_start, datetime.min.time())
+            ed = datetime.combine(calc_end, datetime.max.time())
             attended_classes = db.query(Attendance).filter(
                 Attendance.student_id == student.id,
                 Attendance.timestamp >= sd,
+                Attendance.timestamp <= ed,
                 Attendance.time_slot.isnot(None)
             ).count()
         
@@ -146,5 +178,12 @@ def get_attendance_percentage(
     # Sort: shortage students first, then by percentage ascending
     result.sort(key=lambda x: (0 if x["status"] == "shortage" else 1, x["percentage"]))
     
-    return result
+    period = "semester"
+    if month_start:
+        period = f"{calendar.month_name[month]} {year or date.today().year}"
+    
+    return {
+        "period": period,
+        "students": result
+    }
 

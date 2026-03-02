@@ -173,13 +173,15 @@ def verify_face(request: FaceVerificationRequest, db: Session = Depends(get_db))
             except Exception as e:
                 print(f"Timetable lookup error: {e}")
 
-        # 5. Log Attendance — per-class deduplication
+        # 5. Log Attendance — ONLY during scheduled class time
         subject_for_log = current_class["subject"] if current_class else None
         time_slot_for_log = current_class["time_slot"] if current_class else None
         
         should_log = True
+        no_class_message = None
+        
         if time_slot_for_log:
-            # Check if already logged for THIS class period today
+            # There IS a class right now — check if already logged for THIS class period today
             today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
             existing = db.query(Attendance).filter(
                 Attendance.student_id == student_id,
@@ -188,15 +190,11 @@ def verify_face(request: FaceVerificationRequest, db: Session = Depends(get_db))
             ).first()
             if existing:
                 should_log = False
+                no_class_message = f"Already marked for {subject_for_log} ({time_slot_for_log})"
         else:
-            # No timetable / no current class — fallback to 1 min dedup
-            last_log = db.query(Attendance).filter(
-                Attendance.student_id == student_id
-            ).order_by(Attendance.timestamp.desc()).first()
-            if last_log:
-                time_diff = (datetime.utcnow() - last_log.timestamp).total_seconds()
-                if time_diff < 60:
-                    should_log = False
+            # No class running right now — DO NOT log attendance
+            should_log = False
+            no_class_message = "No class is scheduled at this time. Attendance can only be marked during your class hours."
         
         if should_log:
             log = Attendance(
@@ -278,6 +276,9 @@ def verify_face(request: FaceVerificationRequest, db: Session = Depends(get_db))
             "total_classes": total_classes,
             "attended_classes": attended_classes,
         }
+        
+        if no_class_message:
+            response["no_class_message"] = no_class_message
         
         if next_class_info:
             response["next_subject"] = next_class_info["subject"]
