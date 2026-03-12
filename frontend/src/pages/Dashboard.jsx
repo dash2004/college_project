@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import StatsCard from '../components/StatsCard';
 import TrainingPanel from '../components/TrainingPanel';
-import { Users, Database, ShieldCheck, Activity, Clock } from 'lucide-react';
+import { Users, Database, ShieldCheck, Activity, Clock, Bell, BellOff } from 'lucide-react';
 import api from '../services/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -13,17 +13,20 @@ const Dashboard = () => {
         model_status: "Checking..."
     });
     const [trends, setTrends] = useState({ daily: [], weekly: [], recent_activity: [] });
+    const [notificationsPaused, setNotificationsPaused] = useState(false);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [statsRes, trendsRes] = await Promise.all([
+                const [statsRes, trendsRes, settingsRes] = await Promise.all([
                     api.get('/dashboard/stats'),
-                    api.get('/dashboard/trends')
+                    api.get('/dashboard/trends'),
+                    api.get('/settings/notifications-paused')
                 ]);
                 setStats(statsRes.data);
                 setTrends(trendsRes.data);
+                setNotificationsPaused(settingsRes.data.paused);
             } catch (error) {
                 console.error("Error fetching dashboard data:", error);
                 setStats({
@@ -54,8 +57,47 @@ const Dashboard = () => {
         return `${diffDay}d ago`;
     };
 
+    const toggleNotifications = async () => {
+        try {
+            const newValue = !notificationsPaused;
+            await api.post('/settings/notifications-paused', { value: newValue });
+            setNotificationsPaused(newValue);
+        } catch (error) {
+            console.error("Failed to toggle notifications:", error);
+            alert("Failed to update notification settings");
+        }
+    };
+
     return (
         <div className="space-y-6">
+            {/* Header & Global Notification Toggle */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 className="text-xl font-bold text-slate-800">System Overview</h2>
+                    <p className="text-sm text-slate-500">Monitor attendance trends and system status</p>
+                </div>
+
+                <button
+                    onClick={toggleNotifications}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all shadow-sm ${notificationsPaused
+                            ? 'bg-rose-100 text-rose-700 hover:bg-rose-200 border border-rose-200'
+                            : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200'
+                        }`}
+                >
+                    {notificationsPaused ? (
+                        <>
+                            <BellOff size={18} className="text-rose-600" />
+                            <span>Notifications Paused (College Leave)</span>
+                        </>
+                    ) : (
+                        <>
+                            <Bell size={18} className="text-emerald-600" />
+                            <span>Notifications Active</span>
+                        </>
+                    )}
+                </button>
+            </div>
+
             {/* Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatsCard

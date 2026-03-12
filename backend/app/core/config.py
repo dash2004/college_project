@@ -18,13 +18,22 @@ class Settings(BaseSettings):
     FACE_CONFIDENCE_THRESHOLD: float = 0.90
     MAX_VERIFICATION_ATTEMPTS: int = 3
 
-    # Fast2SMS (SMS notifications)
+    # Fast2SMS (SMS notifications - kept for legacy/optional)
     FAST2SMS_API_KEY: str = ""
     SMS_ENABLED: bool = False  # Set to True when API key is configured
+
+    # Email Notifications (Replacing Twilio)
+    SMTP_SERVER: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    EMAIL_ENABLED: bool = False
+    SENDER_EMAIL: str = ""
 
     # Attendance thresholds
     ATTENDANCE_MIN_PERCENTAGE: float = 80.0  # Minimum required attendance %
     BEFORE_CLASS_REMINDER_MINUTES: int = 10  # Send reminder N minutes before class
+    END_OF_DAY_REPORT_TIME: str = "17:00"  # Time to send the end of day report (24-hour format)
 
     class Config:
         case_sensitive = True
