@@ -16,3 +16,4 @@ class User(Base):
     full_name = Column(String)
     role = Column(String, default=UserRole.STUDENT)
     is_active = Column(Boolean, default=True)
+    must_change_password = Column(Boolean, default=True)

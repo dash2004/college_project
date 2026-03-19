@@ -45,23 +45,24 @@ class LivenessService:
         if not frames:
             return {"passed": False, "liveness_score": 0.0, "error": "No valid frames"}
 
+        # Optimization: Take max 10 frames evenly spaced to speed up MediaPipe processing
+        if len(frames) > 10:
+            indices = np.linspace(0, len(frames)-1, 10).astype(int)
+            sampled_frames = [frames[i] for i in indices]
+        else:
+            sampled_frames = frames
+
         # 1. Blink Detection
-        blink_res = self.blink_detector.detect(frames) # {'passed', 'blink_count', 'score'}
+        blink_res = self.blink_detector.detect(sampled_frames) # {'passed', 'blink_count', 'score'}
         
         # 2. Motion Detection (Check for ANY significant head movement)
-        # We check range of motion for both yaw and pitch
-        motion_res_left = self.motion_detector.verify_challenge(frames, "turn_left")
-        motion_res_right = self.motion_detector.verify_challenge(frames, "turn_right")
-        # Take the best motion score
-        motion_score = max(motion_res_left.get("score", 0), motion_res_right.get("score", 0))
+        # Evaluate left/right motion in a single pass over sampled frames
+        motion_res = self.motion_detector.evaluate_motion(sampled_frames)
+        motion_score = motion_res["best_motion_score"]
 
         # 3. Combined Score
         # We allow either good blinking OR good motion to contribute.
-        # However, for high security, we might want a mix. 
-        # For now, let's take the weighted average, but boost it if both are present.
-        # Actually, let's use a soft-OR: score = 1 - (1-blink)*(1-motion)
-        # If blink=0.8, motion=0.0 -> score = 1 - 0.2*1 = 0.8
-        # If blink=0.5, motion=0.5 -> score = 1 - 0.5*0.5 = 0.75
+        # Soft-OR: score = 1 - (1-blink)*(1-motion)
         liveness_score = 1.0 - ((1.0 - blink_res.get("score", 0)) * (1.0 - motion_score))
         
         passed = liveness_score > 0.80 # Internal threshold slightly lower than global strict one

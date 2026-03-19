@@ -3,33 +3,38 @@ import { Navigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
 
 const ProtectedRoute = ({ children }) => {
-    const [isAuthenticated, setIsAuthenticated] = useState(null);
+    const [authState, setAuthState] = useState(null); // null=loading, 'admin'=ok, 'student'=redirect, 'none'=login
     const location = useLocation();
 
     useEffect(() => {
         const checkAuth = async () => {
             const token = localStorage.getItem('token');
+            const role = localStorage.getItem('role');
+
             if (!token) {
-                setIsAuthenticated(false);
+                setAuthState('none');
                 return;
             }
 
             try {
-                // Verify token by calling /me endpoint
                 await api.get('/auth/me');
-                setIsAuthenticated(true);
+                if (role === 'student') {
+                    setAuthState('student');
+                } else {
+                    setAuthState('admin');
+                }
             } catch (error) {
                 console.error("Auth check failed", error);
                 localStorage.removeItem('token');
-                setIsAuthenticated(false);
+                localStorage.removeItem('role');
+                setAuthState('none');
             }
         };
 
         checkAuth();
     }, []);
 
-    if (isAuthenticated === null) {
-        // Loading state
+    if (authState === null) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center">
                 <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -37,11 +42,16 @@ const ProtectedRoute = ({ children }) => {
         );
     }
 
-    if (!isAuthenticated) {
+    if (authState === 'none') {
         return <Navigate to="/login" state={{ from: location }} replace />;
+    }
+
+    if (authState === 'student') {
+        return <Navigate to="/student" replace />;
     }
 
     return children;
 };
 
 export default ProtectedRoute;
+

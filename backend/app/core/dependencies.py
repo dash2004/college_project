@@ -37,3 +37,14 @@ def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
             status_code=403, detail="The user doesn't have enough privileges"
         )
     return current_user
+
+def get_current_student(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.role != "student":
+        raise HTTPException(
+            status_code=403, detail="Only students can access this resource"
+        )
+    from app.models.student import Student
+    student = db.query(Student).filter(Student.user_id == current_user.id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student profile not found")
+    return {"user": current_user, "student": student}

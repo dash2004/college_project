@@ -1,29 +1,57 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import DashboardLayout from './layouts/DashboardLayout';
+import StudentLayout from './layouts/StudentLayout';
 import Dashboard from './pages/Dashboard';
 import Registration from './pages/Registration';
 import LiveVerification from './pages/LiveVerification';
 import Attendance from './pages/Attendance';
 import Timetable from './pages/Timetable';
-
-// Placeholders for other pages
-const Placeholder = ({ title }) => (
-    <div className="flex items-center justify-center h-64 border-2 border-dashed border-slate-200 rounded-xl">
-        <p className="text-slate-400 font-medium text-lg">Coming Soon: {title}</p>
-    </div>
-);
+import LiveAttendance from './pages/LiveAttendance';
 
 import ProtectedRoute from './components/ProtectedRoute';
+import StudentProtectedRoute from './components/StudentProtectedRoute';
 import Login from './pages/Login';
 import Students from './pages/Students';
+
+// Student pages
+import StudentDashboard from './pages/student/StudentDashboard';
+import StudentAttendanceHistory from './pages/student/StudentAttendanceHistory';
+import StudentTimetable from './pages/student/StudentTimetable';
+import StudentProfile from './pages/student/StudentProfile';
+import StudentNotifications from './pages/student/StudentNotifications';
+import ChangePassword from './pages/student/ChangePassword';
 
 function App() {
     return (
         <BrowserRouter>
             <Routes>
                 <Route path="/login" element={<Login />} />
+                <Route path="/live-attendance" element={<LiveAttendance />} />
 
+                {/* Student: forced password change */}
+                <Route path="/student/change-password" element={
+                    <StudentProtectedRoute>
+                        <ChangePassword />
+                    </StudentProtectedRoute>
+                } />
+
+                {/* Student Portal */}
+                <Route path="/student/*" element={
+                    <StudentProtectedRoute>
+                        <StudentLayout>
+                            <Routes>
+                                <Route path="/" element={<StudentDashboard />} />
+                                <Route path="/attendance" element={<StudentAttendanceHistory />} />
+                                <Route path="/timetable" element={<StudentTimetable />} />
+                                <Route path="/notifications" element={<StudentNotifications />} />
+                                <Route path="/profile" element={<StudentProfile />} />
+                            </Routes>
+                        </StudentLayout>
+                    </StudentProtectedRoute>
+                } />
+
+                {/* Admin Panel */}
                 <Route path="/*" element={
                     <ProtectedRoute>
                         <DashboardLayout>

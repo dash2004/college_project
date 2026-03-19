@@ -40,7 +40,7 @@ try:
 except Exception as e:
     print(f"Failed to start notification scheduler: {e}")
 
-from app.api.v1 import auth, students, verify, attendance, dashboard, model, timetable, settings as settings_api
+from app.api.v1 import auth, students, verify, attendance, dashboard, model, timetable, settings as settings_api, student_portal, qr_attendance
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
 app.include_router(students.router, prefix=f"{settings.API_V1_STR}/students", tags=["students"])
 app.include_router(verify.router, prefix=f"{settings.API_V1_STR}/verify", tags=["verify"])
@@ -49,3 +49,6 @@ app.include_router(dashboard.router, prefix=f"{settings.API_V1_STR}/dashboard", 
 app.include_router(model.router, prefix=f"{settings.API_V1_STR}/model", tags=["model"])
 app.include_router(timetable.router, prefix=f"{settings.API_V1_STR}/timetable", tags=["timetable"])
 app.include_router(settings_api.router, prefix=f"{settings.API_V1_STR}/settings", tags=["settings"])
+app.include_router(student_portal.router, prefix=f"{settings.API_V1_STR}/student-portal", tags=["student-portal"])
+app.include_router(qr_attendance.router, prefix=f"{settings.API_V1_STR}/qr", tags=["qr-attendance"])
+

@@ -61,8 +61,39 @@ class MotionDetector:
         
         return pitch, yaw, roll
 
-    def verify_challenge(self, frames, challenge_type="turn_left"):
+    def evaluate_motion(self, frames):
         max_yaw = 0
+        min_yaw = 0
+        max_pitch = 0
+        min_pitch = 0
+        
+        for frame in frames:
+            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
+            
+            result = self.detector.detect(mp_image)
+            
+            if result.facial_transformation_matrixes:
+                matrix = result.facial_transformation_matrixes[0].data
+                pitch, yaw, roll = self.get_head_pose(matrix)
+                
+                max_yaw = max(max_yaw, yaw)
+                min_yaw = min(min_yaw, yaw)
+                max_pitch = max(max_pitch, pitch)
+                min_pitch = min(min_pitch, pitch)
+        
+        left_score = min(max(0, (max_yaw - 5) / 25.0), 1.0)
+        right_score = min(max(0, (abs(min_yaw) - 5) / 25.0), 1.0)
+        
+        return {
+            "max_yaw": max_yaw,
+            "min_yaw": min_yaw,
+            "left_score": left_score,
+            "right_score": right_score,
+            "best_motion_score": max(left_score, right_score)
+        }
+
+    def verify_challenge(self, frames, challenge_type="turn_left"):
         min_yaw = 0
         max_pitch = 0
         min_pitch = 0

@@ -16,6 +16,8 @@ class UserLogin(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+    role: str
+    must_change_password: bool = False
 
 class TokenData(BaseModel):
     email: Optional[str] = None
@@ -27,3 +29,7 @@ class UserResponse(UserBase):
 
     class Config:
         from_attributes = True
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str

@@ -16,7 +16,7 @@ def test_emails():
     if not settings.EMAIL_ENABLED:
         print("Warning: EMAIL_ENABLED is False or missing in configuration.")
         
-    TEST_EMAIL = os.getenv("TEST_EMAIL", "bsdhanush57@gmail.com")
+    TEST_EMAIL = os.getenv("TEST_EMAIL", "kapidhwajsm@gmail.com")
     
     print(f"Testing Email messaging to: {TEST_EMAIL}")
     print(f"Using SMTP Server: {settings.SMTP_SERVER}")
