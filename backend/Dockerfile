@@ -2,8 +2,8 @@ FROM python:3.10-slim
 
 # Install OpenGL/GLES libraries required by MediaPipe
 RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
-    libgles2-mesa \
+    libgl1 \
+    libgles2 \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
