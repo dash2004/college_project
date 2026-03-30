@@ -5,16 +5,19 @@ import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import os
+import requests
 
 class BlinkDetector:
     def __init__(self):
         # Path to the downloaded model: backend/face_landmarker.task
         # Current file: backend/app/core/liveness/blink_detector.py
         current_dir = os.path.dirname(__file__)
-        model_path = os.path.abspath(os.path.join(current_dir, "..", "..", "..", "face_landmarker.task"))
+        self.model_path = os.path.abspath(os.path.join(current_dir, "..", "..", "..", "face_landmarker.task"))
+        
+        self._ensure_model()
         
         # Configure MediaPipe Face Landmarker
-        base_options = python.BaseOptions(model_asset_path=model_path)
+        base_options = python.BaseOptions(model_asset_path=self.model_path)
         options = vision.FaceLandmarkerOptions(
             base_options=base_options,
             output_face_blendshapes=True,
@@ -28,6 +31,17 @@ class BlinkDetector:
         self.RIGHT_EYE = [362, 385, 387, 263, 373, 380]
         
         self.EAR_THRESHOLD = 0.22 
+        
+    def _ensure_model(self):
+        url = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
+        if not os.path.exists(self.model_path):
+            print(f"Downloading {self.model_path}...")
+            with requests.get(url, stream=True) as r:
+                r.raise_for_status()
+                with open(self.model_path, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        f.write(chunk)
+        
         
     def calculate_ear(self, eye_points, landmarks):
         # Landmarks in Tasks API are objects with x, y, z
