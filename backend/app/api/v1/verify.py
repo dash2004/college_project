@@ -61,7 +61,7 @@ def verify_face(request: FaceVerificationRequest, db: Session = Depends(get_db))
         
         # Prepare Attempt Log
         attempt = VerificationAttempt(
-            liveness_score=liveness_result["liveness_score"],
+            liveness_score=float(liveness_result["liveness_score"]),
             passed=False
         )
         db.add(attempt) # Add to session to get ID, but don't commit yet
