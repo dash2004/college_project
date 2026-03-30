@@ -11,7 +11,7 @@ class BlinkDetector:
         # Path to the downloaded model: backend/face_landmarker.task
         # Current file: backend/app/core/liveness/blink_detector.py
         current_dir = os.path.dirname(__file__)
-        model_path = os.path.abspath(os.path.join(current_dir, "../../../../face_landmarker.task"))
+        model_path = os.path.abspath(os.path.join(current_dir, "..", "..", "..", "face_landmarker.task"))
         
         # Configure MediaPipe Face Landmarker
         base_options = python.BaseOptions(model_asset_path=model_path)
